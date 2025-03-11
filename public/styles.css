@@ -446,7 +446,7 @@ footer p {
 
 .fancy-text {
     font-family: 'Great Vibes', cursive;
-    font-size: 3.2rem;
+    font-size: 4rem;
     color: var(--primary-color);
     text-shadow: 
         0 0 10px var(--primary-color),
@@ -455,7 +455,7 @@ footer p {
 
 .birthday-text {
     font-weight: 600;
-    font-size: 3rem;
+    font-size: 3.8rem;
     background: linear-gradient(45deg, var(--primary-color), #FFD700);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -465,5 +465,5 @@ footer p {
 
 .photo-text {
     font-weight: normal;
-    font-size: 2.2rem;
+    font-size: 2.8rem;
 } 
