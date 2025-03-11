@@ -75,8 +75,12 @@
                     setTimeout(() => {
                         window.location.href = '/gallery.html';
                     }, 1500);
+                } else {
+                    status.textContent = result.message || 'Error uploading photo. Please try again.';
+                    status.className = 'upload-status error';
                 }
             } catch (error) {
+                console.error('Upload error:', error);
                 status.textContent = 'Error uploading photo. Please try again.';
                 status.className = 'upload-status error';
             }

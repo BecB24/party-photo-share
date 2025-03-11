@@ -13,6 +13,13 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Add debug logging
+console.log('Cloudinary Configuration:', {
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY ? '***' : undefined,
+    api_secret: process.env.CLOUDINARY_API_SECRET ? '***' : undefined
+});
+
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -32,20 +39,32 @@ app.get('/api/health', (req, res) => {
 });
 
 app.post('/api/upload', upload.single('image'), async (req, res) => {
+    console.log('Upload request received');
+    
     if (!req.file) {
+        console.log('No file in request');
         return res.status(400).send('No file uploaded.');
     }
 
     try {
+        console.log('File received:', {
+            mimetype: req.file.mimetype,
+            size: req.file.size
+        });
+
         // Convert buffer to base64
         const b64 = Buffer.from(req.file.buffer).toString('base64');
         const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
+        
+        console.log('Attempting to upload to Cloudinary...');
         
         // Upload to Cloudinary
         const result = await cloudinary.uploader.upload(dataURI, {
             resource_type: 'auto',
             folder: 'party-photos'
         });
+
+        console.log('Cloudinary upload successful:', result.secure_url);
 
         // Store the URL (in production, save this to a database)
         imageUrls.push({
@@ -59,10 +78,15 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             url: result.secure_url
         });
     } catch (error) {
-        console.error('Upload error:', error);
+        console.error('Upload error details:', {
+            message: error.message,
+            stack: error.stack,
+            code: error.http_code || error.code
+        });
+        
         res.status(500).json({
             success: false,
-            message: 'Error uploading file'
+            message: 'Error uploading file: ' + error.message
         });
     }
 });
