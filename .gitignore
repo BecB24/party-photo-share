@@ -1,5 +1,16 @@
+# Dependencies
 node_modules/
-.DS_Store
+
+# Environment variables
 .env
+
+# OS files
+.DS_Store
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
 uploads/*
 !uploads/.gitkeep 
