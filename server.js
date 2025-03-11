@@ -7,7 +7,7 @@ require('dotenv').config();
 
 // Configure Cloudinary with direct values for serverless environment
 cloudinary.config({
-    cloud_name: 'dtrnwnju',
+    cloud_name: 'dtrnwnuju',
     api_key: '983297892259464',
     api_secret: 'OsMT1S1CXEayXAUFK9y6pI07HX8'
 });
