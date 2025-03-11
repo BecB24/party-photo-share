@@ -5,11 +5,11 @@ const QRCode = require('qrcode');
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 
-// Configure Cloudinary
+// Configure Cloudinary with direct values for serverless environment
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
+    cloud_name: 'dtrnwnju',
+    api_key: '983297892259464',
+    api_secret: 'OsMT1S1CXEayXAUFK9y6pI07HX8'
 });
 
 const app = express();
@@ -34,10 +34,12 @@ app.use(express.static('public'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+    const config = cloudinary.config();
     res.json({ 
         status: 'ok',
         cloudinary: {
-            configured: !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
+            configured: !!config.cloud_name,
+            cloud_name: config.cloud_name
         }
     });
 });
