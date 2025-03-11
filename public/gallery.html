@@ -44,12 +44,12 @@
         // Load images
         async function loadImages() {
             try {
-                const response = await fetch('/images');
+                const response = await fetch('/api/images');
                 const images = await response.json();
                 
                 gallery.innerHTML = images.map(image => `
                     <div class="gallery-item">
-                        <img src="/uploads/${image}" alt="Party photo" loading="lazy" onclick="openModal(this.src)">
+                        <img src="${image.url}" alt="Party photo" loading="lazy" onclick="openModal(this.src)">
                     </div>
                 `).join('');
             } catch (error) {
