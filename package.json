@@ -1,17 +1,21 @@
 {
-  "name": "birthday-qr-pictures",
+  "name": "party-photo-share",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "A party photo sharing website with QR code upload functionality",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
-  "keywords": [],
+  "keywords": ["party", "photos", "qr-code", "gallery"],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "express": "^4.21.2",
-    "multer": "^1.4.5-lts.1",
-    "qrcode": "^1.5.4"
+    "express": "^4.17.1",
+    "multer": "^1.4.2",
+    "qrcode": "^1.4.4"
+  },
+  "engines": {
+    "node": ">=12.0.0"
   }
 }

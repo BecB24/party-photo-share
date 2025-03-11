@@ -5,7 +5,7 @@ const QRCode = require('qrcode');
 const fs = require('fs');
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
@@ -58,7 +58,10 @@ app.get('/images', (req, res) => {
 // Generate QR Code
 app.get('/qr-code', async (req, res) => {
     try {
-        const url = `http://localhost:${port}/upload.html`;
+        // Get the host from the request
+        const host = req.get('host');
+        const protocol = req.protocol;
+        const url = `${protocol}://${host}/upload.html`;
         const qrCode = await QRCode.toDataURL(url);
         res.json({ qrCode });
     } catch (err) {
