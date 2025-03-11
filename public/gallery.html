@@ -32,7 +32,9 @@
 
     <div id="modal" class="modal">
         <span class="close-modal">&times;</span>
+        <button class="nav-btn prev-btn">&lt;</button>
         <img id="modal-image" src="" alt="Full size image">
+        <button class="nav-btn next-btn">&gt;</button>
     </div>
 
     <script>
@@ -40,16 +42,21 @@
         const modal = document.getElementById('modal');
         const modalImg = document.getElementById('modal-image');
         const closeModal = document.querySelector('.close-modal');
+        const prevBtn = document.querySelector('.prev-btn');
+        const nextBtn = document.querySelector('.next-btn');
+        
+        let currentImageIndex = 0;
+        let images = [];
 
         // Load images
         async function loadImages() {
             try {
                 const response = await fetch('/api/images');
-                const images = await response.json();
+                images = await response.json();
                 
-                gallery.innerHTML = images.map(image => `
+                gallery.innerHTML = images.map((image, index) => `
                     <div class="gallery-item">
-                        <img src="${image.url}" alt="Party photo" loading="lazy" onclick="openModal(this.src)">
+                        <img src="${image.url}" alt="Party photo" loading="lazy" onclick="openModal('${image.url}', ${index})">
                     </div>
                 `).join('');
             } catch (error) {
@@ -59,14 +66,53 @@
         }
 
         // Modal functions
-        function openModal(src) {
+        function openModal(src, index) {
             modal.style.display = 'flex';
             modalImg.src = src;
+            currentImageIndex = index;
+            updateNavigationButtons();
+        }
+
+        function updateNavigationButtons() {
+            prevBtn.style.display = currentImageIndex > 0 ? 'block' : 'none';
+            nextBtn.style.display = currentImageIndex < images.length - 1 ? 'block' : 'none';
+        }
+
+        function showPreviousImage() {
+            if (currentImageIndex > 0) {
+                currentImageIndex--;
+                modalImg.src = images[currentImageIndex].url;
+                updateNavigationButtons();
+            }
+        }
+
+        function showNextImage() {
+            if (currentImageIndex < images.length - 1) {
+                currentImageIndex++;
+                modalImg.src = images[currentImageIndex].url;
+                updateNavigationButtons();
+            }
         }
 
         closeModal.onclick = function() {
             modal.style.display = 'none';
         }
+
+        prevBtn.onclick = showPreviousImage;
+        nextBtn.onclick = showNextImage;
+
+        // Keyboard navigation
+        window.addEventListener('keydown', function(event) {
+            if (modal.style.display === 'flex') {
+                if (event.key === 'ArrowLeft') {
+                    showPreviousImage();
+                } else if (event.key === 'ArrowRight') {
+                    showNextImage();
+                } else if (event.key === 'Escape') {
+                    modal.style.display = 'none';
+                }
+            }
+        });
 
         window.onclick = function(event) {
             if (event.target === modal) {

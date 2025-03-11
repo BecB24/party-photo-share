@@ -274,6 +274,37 @@ input[type="file"] {
     cursor: pointer;
 }
 
+.nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(192, 169, 96, 0.3);
+    color: var(--text-color);
+    border: none;
+    padding: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-btn:hover {
+    background-color: var(--primary-color);
+}
+
+.prev-btn {
+    left: 30px;
+}
+
+.next-btn {
+    right: 30px;
+}
+
 /* Footer */
 footer {
     text-align: center;
@@ -323,5 +354,20 @@ footer p {
 
     .gallery-item img {
         height: 200px;
+    }
+
+    .nav-btn {
+        padding: 15px;
+        font-size: 20px;
+        width: 50px;
+        height: 50px;
+    }
+
+    .prev-btn {
+        left: 10px;
+    }
+
+    .next-btn {
+        right: 10px;
     }
 } 
