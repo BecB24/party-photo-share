@@ -2,14 +2,26 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const QRCode = require('qrcode');
+const cloudinary = require('cloudinary').v2;
+require('dotenv').config();
 const fs = require('fs');
+
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Set up storage for uploaded files
-const storage = multer.memoryStorage(); // Change to memory storage for Vercel
+// Set up memory storage for temporary file handling
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+
+// In-memory store for image URLs (replace with a database in production)
+let imageUrls = [];
 
 // Serve static files
 app.use(express.static('public'));
@@ -24,18 +36,40 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         return res.status(400).send('No file uploaded.');
     }
 
-    // For demo purposes, we'll just acknowledge the upload
-    // In production, you should use a proper storage service like S3 or Cloudinary
-    res.json({
-        success: true,
-        message: 'File received successfully'
-    });
+    try {
+        // Convert buffer to base64
+        const b64 = Buffer.from(req.file.buffer).toString('base64');
+        const dataURI = 'data:' + req.file.mimetype + ';base64,' + b64;
+        
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(dataURI, {
+            resource_type: 'auto',
+            folder: 'party-photos'
+        });
+
+        // Store the URL (in production, save this to a database)
+        imageUrls.push({
+            url: result.secure_url,
+            timestamp: new Date()
+        });
+
+        res.json({
+            success: true,
+            message: 'File uploaded successfully',
+            url: result.secure_url
+        });
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error uploading file'
+        });
+    }
 });
 
 app.get('/api/images', (req, res) => {
-    // For demo purposes, return an empty array
-    // In production, you should fetch from your storage service
-    res.json([]);
+    // Return all image URLs (in production, fetch from database)
+    res.json(imageUrls);
 });
 
 // Generate QR Code

@@ -7,10 +7,17 @@
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": ["party", "photos", "qr-code", "gallery"],
+  "keywords": [
+    "party",
+    "photos",
+    "qr-code",
+    "gallery"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cloudinary": "^2.6.0",
+    "dotenv": "^16.4.7",
     "express": "^4.17.1",
     "multer": "^1.4.2",
     "qrcode": "^1.4.4"
