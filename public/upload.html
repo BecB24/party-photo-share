@@ -59,29 +59,40 @@
         // Handle form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData(form);
+            status.textContent = 'Uploading...';
+            status.className = 'upload-status';
             
             try {
-                status.textContent = 'Uploading...';
+                const formData = new FormData(form);
                 const response = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData
                 });
                 
                 const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || 'Upload failed');
+                }
+
                 if (result.success) {
                     status.textContent = 'Photo uploaded successfully!';
                     status.className = 'upload-status success';
+                    
+                    // Clear the form and preview
+                    form.reset();
+                    preview.innerHTML = '';
+                    
+                    // Redirect to gallery after a short delay
                     setTimeout(() => {
                         window.location.href = '/gallery.html';
                     }, 1500);
                 } else {
-                    status.textContent = result.message || 'Error uploading photo. Please try again.';
-                    status.className = 'upload-status error';
+                    throw new Error(result.message || 'Upload failed');
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                status.textContent = 'Error uploading photo. Please try again.';
+                status.textContent = error.message || 'Error uploading photo. Please try again.';
                 status.className = 'upload-status error';
             }
         });
