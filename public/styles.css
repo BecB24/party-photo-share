@@ -53,10 +53,9 @@ h1 {
     color: var(--text-color);
     font-size: 2.5rem;
     margin-bottom: 1rem;
-    text-shadow: 
-        0 0 10px var(--primary-color),
-        2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     letter-spacing: 1px;
+    line-height: 1.3;
 }
 
 h2 {
@@ -389,6 +388,7 @@ footer p {
 
     h1 {
         font-size: 2rem;
+        line-height: 1.4;
     }
 
     h2 {
@@ -428,4 +428,42 @@ footer p {
     .next-btn {
         right: 10px;
     }
+
+    .fancy-text {
+        font-size: 2.5rem;
+    }
+
+    .birthday-text {
+        font-size: 2.3rem;
+    }
+
+    .photo-text {
+        font-size: 1.8rem;
+        display: block;
+        margin-top: 0.5rem;
+    }
+}
+
+.fancy-text {
+    font-family: 'Great Vibes', cursive;
+    font-size: 3.2rem;
+    color: var(--primary-color);
+    text-shadow: 
+        0 0 10px var(--primary-color),
+        2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.birthday-text {
+    font-weight: 600;
+    font-size: 3rem;
+    background: linear-gradient(45deg, var(--primary-color), #FFD700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    padding: 0 0.5rem;
+}
+
+.photo-text {
+    font-weight: normal;
+    font-size: 2.2rem;
 } 
