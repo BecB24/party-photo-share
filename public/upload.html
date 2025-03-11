@@ -23,13 +23,19 @@
                 <h2>Upload Your Photos</h2>
                 <form id="uploadForm" class="upload-form">
                     <div class="file-input-container">
-                        <input type="file" id="imageInput" name="image" accept="image/*" required>
-                        <label for="imageInput" class="custom-file-input">Choose a photo</label>
+                        <input type="file" id="imageInput" name="images" accept="image/*" multiple required>
+                        <label for="imageInput" class="custom-file-input">Choose photos</label>
                     </div>
-                    <div id="preview" class="image-preview"></div>
-                    <button type="submit" class="btn">Upload Photo</button>
+                    <div id="preview" class="image-preview-grid"></div>
+                    <button type="submit" class="btn">Upload Photos</button>
                 </form>
                 <div id="uploadStatus" class="upload-status"></div>
+                <div id="uploadProgress" class="upload-progress-container">
+                    <div class="upload-progress-text">Uploading: <span id="uploadCount">0/0</span></div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill"></div>
+                    </div>
+                </div>
             </section>
         </main>
 
@@ -43,57 +49,103 @@
         const imageInput = document.getElementById('imageInput');
         const preview = document.getElementById('preview');
         const status = document.getElementById('uploadStatus');
+        const progressContainer = document.getElementById('uploadProgress');
+        const progressBar = document.querySelector('.progress-bar-fill');
+        const uploadCount = document.getElementById('uploadCount');
 
-        // Preview image before upload
+        // Preview images before upload
         imageInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
+            preview.innerHTML = '';
+            const files = Array.from(this.files);
+            
+            files.forEach(file => {
                 const reader = new FileReader();
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                
                 reader.onload = function(e) {
-                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                    previewItem.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="preview-overlay">
+                            <span class="preview-filename">${file.name}</span>
+                        </div>
+                    `;
                 }
+                preview.appendChild(previewItem);
                 reader.readAsDataURL(file);
-            }
+            });
         });
 
         // Handle form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            status.textContent = 'Uploading...';
-            status.className = 'upload-status';
+            const files = Array.from(imageInput.files);
             
+            if (files.length === 0) {
+                status.textContent = 'Please select at least one photo';
+                status.className = 'upload-status error';
+                return;
+            }
+
+            status.textContent = 'Preparing upload...';
+            status.className = 'upload-status';
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            uploadCount.textContent = `0/${files.length}`;
+
             try {
-                const formData = new FormData(form);
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.message || 'Upload failed');
+                let successCount = 0;
+                const totalFiles = files.length;
+
+                for (let i = 0; i < files.length; i++) {
+                    const formData = new FormData();
+                    formData.append('image', files[i]);
+
+                    try {
+                        const response = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            successCount++;
+                            uploadCount.textContent = `${successCount}/${totalFiles}`;
+                            progressBar.style.width = `${(successCount / totalFiles) * 100}%`;
+                        } else {
+                            console.error(`Failed to upload ${files[i].name}: ${result.message}`);
+                        }
+                    } catch (error) {
+                        console.error(`Error uploading ${files[i].name}:`, error);
+                    }
                 }
 
-                if (result.success) {
-                    status.textContent = 'Photo uploaded successfully!';
+                if (successCount === totalFiles) {
+                    status.textContent = 'All photos uploaded successfully!';
                     status.className = 'upload-status success';
-                    
-                    // Clear the form and preview
-                    form.reset();
-                    preview.innerHTML = '';
-                    
-                    // Redirect to gallery after a short delay
+                } else if (successCount > 0) {
+                    status.textContent = `Uploaded ${successCount} out of ${totalFiles} photos`;
+                    status.className = 'upload-status warning';
+                } else {
+                    status.textContent = 'Failed to upload photos. Please try again.';
+                    status.className = 'upload-status error';
+                }
+
+                // Clear the form and preview after a successful upload
+                if (successCount > 0) {
                     setTimeout(() => {
+                        form.reset();
+                        preview.innerHTML = '';
+                        progressContainer.style.display = 'none';
                         window.location.href = '/gallery.html';
                     }, 1500);
-                } else {
-                    throw new Error(result.message || 'Upload failed');
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                status.textContent = error.message || 'Error uploading photo. Please try again.';
+                status.textContent = error.message || 'Error uploading photos. Please try again.';
                 status.className = 'upload-status error';
+                progressContainer.style.display = 'none';
             }
         });
     </script>
