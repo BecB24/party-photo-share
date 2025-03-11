@@ -8,57 +8,39 @@ const app = express();
 const port = process.env.PORT || 3001;
 
 // Set up storage for uploaded files
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadDir = 'uploads';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
-        }
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
-
+const storage = multer.memoryStorage(); // Change to memory storage for Vercel
 const upload = multer({ storage: storage });
 
 // Serve static files
 app.use(express.static('public'));
-app.use('/uploads', express.static('uploads'));
-app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
 
 // Routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok' });
 });
 
-app.post('/upload', upload.single('image'), (req, res) => {
+app.post('/api/upload', upload.single('image'), async (req, res) => {
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
+
+    // For demo purposes, we'll just acknowledge the upload
+    // In production, you should use a proper storage service like S3 or Cloudinary
     res.json({
         success: true,
-        filename: req.file.filename
+        message: 'File received successfully'
     });
 });
 
-app.get('/images', (req, res) => {
-    const uploadDir = 'uploads';
-    fs.readdir(uploadDir, (err, files) => {
-        if (err) {
-            return res.status(500).send('Error reading uploads directory');
-        }
-        res.json(files.filter(file => {
-            return ['.jpg', '.jpeg', '.png', '.gif'].includes(path.extname(file).toLowerCase());
-        }));
-    });
+app.get('/api/images', (req, res) => {
+    // For demo purposes, return an empty array
+    // In production, you should fetch from your storage service
+    res.json([]);
 });
 
 // Generate QR Code
-app.get('/qr-code', async (req, res) => {
+app.get('/api/qr-code', async (req, res) => {
     try {
-        // Get the host from the request
         const host = req.get('host');
         const protocol = req.protocol;
         const url = `${protocol}://${host}/upload.html`;
@@ -69,11 +51,16 @@ app.get('/qr-code', async (req, res) => {
     }
 });
 
-// Create uploads directory if it doesn't exist
-if (!fs.existsSync('uploads')) {
-    fs.mkdirSync('uploads');
+// Handle all other routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Only listen if we're running directly (not in Vercel)
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => {
+        console.log(`Server running at http://localhost:${port}`);
+    });
 }
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-}); 
+module.exports = app; 

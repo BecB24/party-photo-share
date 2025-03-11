@@ -39,7 +39,7 @@
 
     <script>
         // Fetch and display QR code
-        fetch('/qr-code')
+        fetch('/api/qr-code')
             .then(response => response.json())
             .then(data => {
                 document.getElementById('qr-image').src = data.qrCode;
