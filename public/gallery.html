@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Gallery - Party Photo Share</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎉 Party Photo Share 📸</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/upload.html">Upload Photos</a>
+                <a href="/gallery.html" class="active">Gallery</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="gallery-section">
+                <h2>Party Photo Gallery</h2>
+                <div id="gallery" class="gallery-grid"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>📸 Capture the moments, share the joy! 🎉</p>
+        </footer>
+    </div>
+
+    <div id="modal" class="modal">
+        <span class="close-modal">&times;</span>
+        <img id="modal-image" src="" alt="Full size image">
+    </div>
+
+    <script>
+        const gallery = document.getElementById('gallery');
+        const modal = document.getElementById('modal');
+        const modalImg = document.getElementById('modal-image');
+        const closeModal = document.querySelector('.close-modal');
+
+        // Load images
+        async function loadImages() {
+            try {
+                const response = await fetch('/images');
+                const images = await response.json();
+                
+                gallery.innerHTML = images.map(image => `
+                    <div class="gallery-item">
+                        <img src="/uploads/${image}" alt="Party photo" loading="lazy" onclick="openModal(this.src)">
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading images:', error);
+                gallery.innerHTML = '<p class="error">Error loading images. Please try again later.</p>';
+            }
+        }
+
+        // Modal functions
+        function openModal(src) {
+            modal.style.display = 'flex';
+            modalImg.src = src;
+        }
+
+        closeModal.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Load images when page loads
+        loadImages();
+
+        // Refresh gallery every 30 seconds
+        setInterval(loadImages, 30000);
+    </script>
+</body>
+</html> 

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Photos - Party Photo Share</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎉 Party Photo Share 📸</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/upload.html" class="active">Upload Photos</a>
+                <a href="/gallery.html">Gallery</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <h2>Upload Your Photos</h2>
+                <form id="uploadForm" class="upload-form">
+                    <div class="file-input-container">
+                        <input type="file" id="imageInput" name="image" accept="image/*" required>
+                        <label for="imageInput" class="custom-file-input">Choose a photo</label>
+                    </div>
+                    <div id="preview" class="image-preview"></div>
+                    <button type="submit" class="btn">Upload Photo</button>
+                </form>
+                <div id="uploadStatus" class="upload-status"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>📸 Capture the moments, share the joy! 🎉</p>
+        </footer>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const imageInput = document.getElementById('imageInput');
+        const preview = document.getElementById('preview');
+        const status = document.getElementById('uploadStatus');
+
+        // Preview image before upload
+        imageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            
+            try {
+                status.textContent = 'Uploading...';
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    status.textContent = 'Photo uploaded successfully!';
+                    status.className = 'upload-status success';
+                    setTimeout(() => {
+                        window.location.href = '/gallery.html';
+                    }, 1500);
+                }
+            } catch (error) {
+                status.textContent = 'Error uploading photo. Please try again.';
+                status.className = 'upload-status error';
+            }
+        });
+    </script>
+</body>
+</html> 

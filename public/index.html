@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party Photo Share</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎉 Party Photo Share 📸</h1>
+            <nav>
+                <a href="/" class="active">Home</a>
+                <a href="/upload.html">Upload Photos</a>
+                <a href="/gallery.html">Gallery</a>
+            </nav>
+        </header>
+        
+        <main>
+            <section class="hero">
+                <h2>Share Your Party Moments!</h2>
+                <p>Scan the QR code below to upload your photos</p>
+                <div id="qrcode" class="qr-container">
+                    <img id="qr-image" alt="QR Code for uploading">
+                </div>
+                <div class="buttons">
+                    <a href="/upload.html" class="btn">Upload Photos</a>
+                    <a href="/gallery.html" class="btn">View Gallery</a>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>📸 Capture the moments, share the joy! 🎉</p>
+        </footer>
+    </div>
+
+    <script>
+        // Fetch and display QR code
+        fetch('/qr-code')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('qr-image').src = data.qrCode;
+            })
+            .catch(error => console.error('Error loading QR code:', error));
+    </script>
+</body>
+</html> 
