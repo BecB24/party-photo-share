@@ -3,14 +3,33 @@ const multer = require('multer');
 const path = require('path');
 const QRCode = require('qrcode');
 const cloudinary = require('cloudinary').v2;
+const mongoose = require('mongoose');
 require('dotenv').config();
 
-// Configure Cloudinary with direct values for serverless environment
+// Configure Cloudinary
 cloudinary.config({
     cloud_name: 'dtrnwnuju',
     api_key: '983297892259464',
     api_secret: 'OsMT1S1CXEayXAUFK9y6pI07HX8'
 });
+
+// MongoDB connection
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+    console.error('MongoDB connection string not found in environment variables');
+}
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('MongoDB connection error:', err));
+
+// Define Image Schema
+const imageSchema = new mongoose.Schema({
+    url: String,
+    timestamp: { type: Date, default: Date.now },
+    publicId: String
+});
+
+const Image = mongoose.model('Image', imageSchema);
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -26,9 +45,6 @@ const upload = multer({
 // Enable JSON body parsing
 app.use(express.json());
 
-// In-memory store for image URLs (replace with a database in production)
-let imageUrls = [];
-
 // Serve static files
 app.use(express.static('public'));
 
@@ -40,7 +56,8 @@ app.get('/api/health', (req, res) => {
         cloudinary: {
             configured: !!config.cloud_name,
             cloud_name: config.cloud_name
-        }
+        },
+        mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
     });
 });
 
@@ -69,18 +86,17 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             ]
         });
 
-        // Store the URL
-        const imageData = {
+        // Create and save new image document
+        const image = new Image({
             url: result.secure_url,
-            timestamp: new Date(),
             publicId: result.public_id
-        };
-        imageUrls.push(imageData);
+        });
+        await image.save();
 
         res.json({
             success: true,
             message: 'File uploaded successfully',
-            data: imageData
+            data: image
         });
     } catch (error) {
         console.error('Upload error:', {
@@ -96,8 +112,17 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 });
 
 // Get images endpoint
-app.get('/api/images', (req, res) => {
-    res.json(imageUrls);
+app.get('/api/images', async (req, res) => {
+    try {
+        const images = await Image.find().sort({ timestamp: -1 });
+        res.json(images);
+    } catch (error) {
+        console.error('Error fetching images:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching images'
+        });
+    }
 });
 
 // QR Code endpoint
