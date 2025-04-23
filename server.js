@@ -6,6 +6,29 @@ const cloudinary = require('cloudinary').v2;
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://becb24:Bec240894@cluster0.mongodb.net/party-photos?retryWrites=true&w=majority';
+
+mongoose.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch(err => {
+    console.error('MongoDB connection error:', err);
+});
+
+// Define Image Schema
+const imageSchema = new mongoose.Schema({
+    url: { type: String, required: true },
+    filename: { type: String, required: true },
+    uploadDate: { type: Date, default: Date.now },
+    publicId: String,
+    resourceType: { type: String, enum: ['image', 'video'] }
+});
+
+const Image = mongoose.model('Image', imageSchema);
+
 // Configure Cloudinary with environment variables
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dtrnwnuju',
@@ -75,6 +98,16 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
         });
         console.log('Cloudinary upload successful:', result.secure_url);
 
+        // Save metadata to MongoDB
+        const imageDoc = new Image({
+            url: result.secure_url,
+            filename: req.file.originalname,
+            publicId: result.public_id,
+            resourceType: isVideo ? 'video' : 'image'
+        });
+        await imageDoc.save();
+        console.log('Metadata saved to MongoDB');
+
         res.json({
             success: true,
             message: 'File uploaded successfully',
@@ -105,42 +138,17 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
 // Get media endpoint
 app.get('/api/images', async (req, res) => {
     try {
-        console.log('Fetching media from Cloudinary...');
+        console.log('Fetching media from MongoDB...');
         
-        // Search for both images and videos
-        const [imageResults, videoResults] = await Promise.all([
-            cloudinary.search
-                .expression('folder:party-photos AND resource_type:image')
-                .sort_by('created_at', 'desc')
-                .max_results(100)
-                .execute(),
-            cloudinary.search
-                .expression('folder:party-photos AND resource_type:video')
-                .sort_by('created_at', 'desc')
-                .max_results(100)
-                .execute()
-        ]);
-
-        // Combine and sort results
-        const allMedia = [
-            ...imageResults.resources.map(resource => ({
-                url: resource.secure_url,
-                publicId: resource.public_id,
-                timestamp: resource.created_at,
-                type: 'image'
-            })),
-            ...videoResults.resources.map(resource => ({
-                url: resource.secure_url,
-                publicId: resource.public_id,
-                timestamp: resource.created_at,
-                type: 'video'
-            }))
-        ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const allMedia = await Image.find({})
+            .sort({ uploadDate: -1 })
+            .limit(100)
+            .lean();
 
         console.log(`Found ${allMedia.length} media items`);
         res.json(allMedia);
     } catch (error) {
-        console.error('Error fetching media from Cloudinary:', error);
+        console.error('Error fetching media:', error);
         res.status(500).json({
             success: false,
             message: 'Error fetching media',
