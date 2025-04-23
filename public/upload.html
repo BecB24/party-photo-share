@@ -3,50 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Media</title>
+    <title>Upload - Rebecca's 30th Birthday Photos & Videos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Great+Vibes&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>
-            <span class="fancy-text">Birthday</span>
-            <span class="photo-text">Photo</span>
-            <span class="share-text">Share</span>
-        </h1>
-        <div class="upload-container">
-            <form id="uploadForm">
-                <div class="file-input-container">
-                    <input type="file" id="mediaInput" name="media" accept="image/*,video/*" required>
-                    <label for="mediaInput" class="custom-file-input">Choose File</label>
+        <header>
+            <h1><span class="fancy-text">Rebecca's</span> <span class="birthday-text">30th</span> <span class="photo-text">Birthday Photos & Videos</span> 🎉</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/upload.html" class="active">Upload Photos & Videos</a>
+                <a href="/gallery.html">Gallery</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <h2>Upload Your Photos & Videos</h2>
+                <form id="uploadForm" class="upload-form">
+                    <div class="file-input-container">
+                        <input type="file" id="mediaInput" name="media" accept="image/*,video/*" required>
+                        <label for="mediaInput" class="custom-file-input">Choose photos & videos</label>
+                    </div>
+                    <div class="upload-info">
+                        <p>Supported formats:</p>
+                        <ul>
+                            <li>Images: JPG, PNG, GIF</li>
+                            <li>Videos: MP4, MOV, AVI</li>
+                            <li>Max file size: 500MB</li>
+                        </ul>
+                    </div>
+                    <div id="preview" class="image-preview-grid"></div>
+                    <button type="submit" class="btn">Upload Files</button>
+                </form>
+                <div id="uploadStatus" class="upload-status"></div>
+                <div id="uploadProgress" class="upload-progress-container">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-bar-fill"></div>
+                    </div>
                 </div>
-                <button type="submit" class="upload-button">Upload</button>
-            </form>
-            <div id="uploadStatus" class="upload-status"></div>
-            <div id="progressBar" class="progress-bar">
-                <div id="progressFill" class="progress-fill"></div>
-            </div>
-        </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>📸 Capture the moments, share the joy! 🎉</p>
+        </footer>
     </div>
 
     <script>
         const CLOUDINARY_CLOUD_NAME = 'dtrnwnuju';
         const CLOUDINARY_UPLOAD_PRESET = 'party_photos_preset';
 
+        // Preview media before upload
+        document.getElementById('mediaInput').addEventListener('change', function() {
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '';
+            const file = this.files[0];
+            
+            if (file) {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                
+                if (file.type.startsWith('video/')) {
+                    // Create video preview
+                    const video = document.createElement('video');
+                    video.src = URL.createObjectURL(file);
+                    video.controls = true;
+                    previewItem.appendChild(video);
+                } else {
+                    // Create image preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = "Preview";
+                        previewItem.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                }
+
+                // Add filename overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'preview-overlay';
+                overlay.innerHTML = `<span class="preview-filename">${file.name}</span>`;
+                previewItem.appendChild(overlay);
+                
+                preview.appendChild(previewItem);
+            }
+        });
+
+        // Handle form submission
         document.getElementById('uploadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const statusDiv = document.getElementById('uploadStatus');
-            const progressBar = document.getElementById('progressBar');
             const progressFill = document.getElementById('progressFill');
+            const uploadProgress = document.getElementById('uploadProgress');
             const fileInput = document.getElementById('mediaInput');
             const file = fileInput.files[0];
 
             if (!file) {
                 statusDiv.textContent = 'Please select a file';
+                statusDiv.className = 'upload-status error';
                 return;
             }
 
             statusDiv.textContent = 'Uploading...';
-            progressBar.style.display = 'block';
+            statusDiv.className = 'upload-status';
+            uploadProgress.style.display = 'block';
             progressFill.style.width = '0%';
 
             try {
@@ -57,7 +121,7 @@
                     formData.append('file', file);
                     formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
                     formData.append('folder', 'party-photos');
-                    formData.append('resource_type', 'auto'); // Let Cloudinary auto-detect the resource type
+                    formData.append('resource_type', 'auto');
 
                     const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
                         method: 'POST',
@@ -95,23 +159,26 @@
                 }
 
                 statusDiv.textContent = 'Upload successful!';
+                statusDiv.className = 'upload-status success';
                 progressFill.style.width = '100%';
-                fileInput.value = ''; // Clear the file input
+                fileInput.value = '';
+                document.getElementById('preview').innerHTML = '';
 
-                // Redirect to gallery after 1 second
+                // Redirect to gallery after 1.5 seconds
                 setTimeout(() => {
                     window.location.href = '/gallery.html';
-                }, 1000);
+                }, 1500);
             } catch (error) {
                 console.error('Upload error:', error);
                 statusDiv.textContent = `Upload failed: ${error.message}`;
-                progressBar.style.display = 'none';
+                statusDiv.className = 'upload-status error';
+                uploadProgress.style.display = 'none';
             }
         });
 
         // Update file input label with selected filename
         document.getElementById('mediaInput').addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name || 'Choose File';
+            const fileName = e.target.files[0]?.name || 'Choose photos & videos';
             const label = document.querySelector('.custom-file-input');
             label.textContent = fileName;
         });
