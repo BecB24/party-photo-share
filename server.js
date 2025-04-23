@@ -3,7 +3,6 @@ const multer = require('multer');
 const path = require('path');
 const QRCode = require('qrcode');
 const cloudinary = require('cloudinary').v2;
-const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 // Configure Cloudinary
@@ -13,100 +12,7 @@ cloudinary.config({
     api_secret: 'OsMT1S1CXEayXAUFK9y6pI07HX8'
 });
 
-// MySQL connection
-const pool = mysql.createPool({
-    host: process.env.DATABASE_HOST,
-    user: process.env.DATABASE_USERNAME,
-    password: process.env.DATABASE_PASSWORD,
-    database: process.env.DATABASE,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    ssl: {
-        rejectUnauthorized: true
-    }
-});
-
-// Test database connection
-const testConnection = async () => {
-    try {
-        const connection = await pool.getConnection();
-        console.log('Successfully connected to MySQL database');
-        
-        // Create images table if it doesn't exist
-        await connection.query(`
-            CREATE TABLE IF NOT EXISTS images (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                url VARCHAR(255) NOT NULL,
-                publicId VARCHAR(255) NOT NULL,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-        
-        connection.release();
-        return true;
-    } catch (error) {
-        console.error('Database connection error:', {
-            message: error.message,
-            code: error.code,
-            errno: error.errno,
-            sqlState: error.sqlState
-        });
-        return false;
-    }
-};
-
-// Initialize database
-testConnection().then(connected => {
-    if (!connected) {
-        console.error('Failed to connect to database. Please check your environment variables.');
-    }
-});
-
 const app = express();
-
-// Test database endpoint
-app.get('/api/test-db', async (req, res) => {
-    try {
-        const connection = await pool.getConnection();
-        
-        // Try to write a test record
-        await connection.query(
-            'INSERT INTO images (url, publicId) VALUES (?, ?)',
-            ['test-url', 'test-id']
-        );
-        
-        // Try to read it back
-        const [rows] = await connection.query(
-            'SELECT * FROM images WHERE publicId = ?',
-            ['test-id']
-        );
-        
-        // Clean up the test record
-        await connection.query(
-            'DELETE FROM images WHERE publicId = ?',
-            ['test-id']
-        );
-        
-        connection.release();
-        
-        res.json({
-            success: true,
-            message: 'Database connection test successful',
-            details: {
-                writeTest: 'passed',
-                readTest: rows.length > 0 ? 'passed' : 'failed'
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Database connection test failed',
-            error: error.message
-        });
-    }
-});
-
 const port = process.env.PORT || 3002;
 
 // Configure multer for memory storage
@@ -124,25 +30,14 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Health check endpoint
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', (req, res) => {
     const config = cloudinary.config();
-    let dbConnected = false;
-    
-    try {
-        const connection = await pool.getConnection();
-        dbConnected = true;
-        connection.release();
-    } catch (error) {
-        console.error('Health check database error:', error);
-    }
-    
     res.json({ 
         status: 'ok',
         cloudinary: {
             configured: !!config.cloud_name,
             cloud_name: config.cloud_name
-        },
-        database: dbConnected ? 'connected' : 'disconnected'
+        }
     });
 });
 
@@ -186,20 +81,6 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             public_id: result.public_id
         });
 
-        // Save to database
-        try {
-            const connection = await pool.getConnection();
-            await connection.query(
-                'INSERT INTO images (url, publicId) VALUES (?, ?)',
-                [result.secure_url, result.public_id]
-            );
-            connection.release();
-            console.log('Image saved to database');
-        } catch (dbError) {
-            console.error('Database error:', dbError);
-            // Don't fail the upload if database save fails
-        }
-
         res.json({
             success: true,
             message: 'File uploaded successfully',
@@ -229,17 +110,25 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 // Get images endpoint
 app.get('/api/images', async (req, res) => {
     try {
-        console.log('Fetching images from database...');
-        const connection = await pool.getConnection();
-        const [rows] = await connection.query(
-            'SELECT * FROM images ORDER BY timestamp DESC'
-        );
-        connection.release();
+        console.log('Fetching images from Cloudinary...');
         
-        console.log('Found images:', rows);
-        res.json(rows);
+        const result = await cloudinary.search
+            .expression('folder:party-photos')
+            .sort_by('created_at', 'desc')
+            .max_results(100)
+            .execute();
+
+        console.log(`Found ${result.total_count} images`);
+        
+        const images = result.resources.map(resource => ({
+            url: resource.secure_url,
+            publicId: resource.public_id,
+            timestamp: resource.created_at
+        }));
+
+        res.json(images);
     } catch (error) {
-        console.error('Error fetching images:', error);
+        console.error('Error fetching images from Cloudinary:', error);
         res.status(500).json({
             success: false,
             message: 'Error fetching images',

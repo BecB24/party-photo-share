@@ -52,16 +52,35 @@
         async function loadImages() {
             try {
                 const response = await fetch('/api/images');
-                images = await response.json();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
                 
-                gallery.innerHTML = images.map((image, index) => `
+                if (!Array.isArray(data)) {
+                    console.error('Unexpected response format:', data);
+                    throw new Error('Invalid response format from server');
+                }
+
+                if (data.length === 0) {
+                    gallery.innerHTML = '<p class="no-images">No images uploaded yet. Be the first to share a photo!</p>';
+                    return;
+                }
+                
+                gallery.innerHTML = data.map((image, index) => `
                     <div class="gallery-item">
                         <img src="${image.url}" alt="Party photo" loading="lazy" onclick="openModal('${image.url}', ${index})">
                     </div>
                 `).join('');
             } catch (error) {
                 console.error('Error loading images:', error);
-                gallery.innerHTML = '<p class="error">Error loading images. Please try again later.</p>';
+                gallery.innerHTML = `
+                    <div class="error-container">
+                        <p class="error">Error loading images. Please try again later.</p>
+                        <p class="error-details">${error.message}</p>
+                        <button onclick="loadImages()" class="btn">Retry</button>
+                    </div>
+                `;
             }
         }
 
