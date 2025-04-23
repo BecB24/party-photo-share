@@ -6,21 +6,23 @@
     <title>Gallery - Rebecca's 30th Birthday Photos</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Great+Vibes&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><span class="fancy-text">Rebecca's</span> <span class="birthday-text">30th</span> <span class="photo-text">Birthday Photos</span> 🎉</h1>
+            <h1><span class="fancy-text">Rebecca's</span> <span class="birthday-text">30th</span> <span class="photo-text">Birthday Photos & Videos</span> 🎉</h1>
             <nav>
                 <a href="/">Home</a>
-                <a href="/upload.html">Upload Photos</a>
+                <a href="/upload.html">Upload Photos & Videos</a>
                 <a href="/gallery.html" class="active">Gallery</a>
             </nav>
         </header>
 
         <main>
             <section class="gallery-section">
-                <h2>Party Photo Gallery</h2>
+                <h2>Party Photo & Video Gallery</h2>
                 <div id="gallery" class="gallery-grid"></div>
             </section>
         </main>
@@ -33,7 +35,12 @@
     <div id="modal" class="modal">
         <span class="close-modal">&times;</span>
         <button class="nav-btn prev-btn">&lt;</button>
-        <img id="modal-image" src="" alt="Full size image">
+        <div class="modal-content">
+            <img id="modal-image" src="" alt="Full size image" style="display: none;">
+            <video id="modal-video" controls playsinline style="display: none;">
+                Your browser does not support the video tag.
+            </video>
+        </div>
         <button class="nav-btn next-btn">&gt;</button>
     </div>
 
@@ -41,12 +48,13 @@
         const gallery = document.getElementById('gallery');
         const modal = document.getElementById('modal');
         const modalImg = document.getElementById('modal-image');
+        const modalVideo = document.getElementById('modal-video');
         const closeModal = document.querySelector('.close-modal');
         const prevBtn = document.querySelector('.prev-btn');
         const nextBtn = document.querySelector('.next-btn');
         
-        let currentImageIndex = 0;
-        let images = [];
+        let currentIndex = 0;
+        let mediaItems = [];
 
         // Load media
         async function loadImages() {
@@ -68,28 +76,25 @@
                 }
                 
                 gallery.innerHTML = media.map((item, index) => {
-                    if (item.type === 'video') {
-                        return `
-                            <div class="gallery-item video-item">
-                                <video src="${item.url}" controls playsinline>
+                    const isVideo = item.type === 'video';
+                    return `
+                        <div class="gallery-item ${isVideo ? 'video-item' : ''}" onclick="openModal('${item.url}', ${index})">
+                            ${isVideo ? `
+                                <video src="${item.url}" preload="metadata">
                                     Your browser does not support the video tag.
                                 </video>
-                                <div class="media-overlay">
-                                    <span class="media-type">Video</span>
-                                </div>
+                            ` : `
+                                <img src="${item.url}" alt="Party photo" loading="lazy">
+                            `}
+                            <div class="media-overlay">
+                                <span class="media-type">${isVideo ? 'Video' : 'Photo'}</span>
                             </div>
-                        `;
-                    } else {
-                        return `
-                            <div class="gallery-item">
-                                <img src="${item.url}" alt="Party photo" loading="lazy" onclick="openModal('${item.url}', ${index})">
-                            </div>
-                        `;
-                    }
+                        </div>
+                    `;
                 }).join('');
 
                 // Store media items for modal navigation
-                images = media;
+                mediaItems = media;
             } catch (error) {
                 console.error('Error loading media:', error);
                 gallery.innerHTML = `
@@ -104,78 +109,67 @@
 
         // Modal functions
         function openModal(src, index) {
-            const item = images[index];
-            if (item.type === 'video') {
-                // Don't open modal for videos, they play inline
-                return;
+            modal.style.display = 'flex';
+            currentIndex = index;
+            updateModalContent();
+        }
+
+        function updateModalContent() {
+            const item = mediaItems[currentIndex];
+            const isVideo = item.type === 'video';
+            
+            // Reset both elements
+            modalImg.style.display = 'none';
+            modalVideo.style.display = 'none';
+            
+            if (isVideo) {
+                modalVideo.src = item.url;
+                modalVideo.style.display = 'block';
+            } else {
+                modalImg.src = item.url;
+                modalImg.style.display = 'block';
             }
             
-            modal.style.display = 'flex';
-            modalImg.src = src;
-            currentImageIndex = index;
             updateNavigationButtons();
         }
 
         function updateNavigationButtons() {
-            // Find next/previous image (skipping videos)
-            let prevIndex = currentImageIndex - 1;
-            while (prevIndex >= 0 && images[prevIndex].type === 'video') {
-                prevIndex--;
-            }
-            
-            let nextIndex = currentImageIndex + 1;
-            while (nextIndex < images.length && images[nextIndex].type === 'video') {
-                nextIndex++;
-            }
-            
-            prevBtn.style.display = prevIndex >= 0 ? 'block' : 'none';
-            nextBtn.style.display = nextIndex < images.length ? 'block' : 'none';
+            prevBtn.style.display = currentIndex > 0 ? 'block' : 'none';
+            nextBtn.style.display = currentIndex < mediaItems.length - 1 ? 'block' : 'none';
         }
 
-        function showPreviousImage() {
-            if (currentImageIndex > 0) {
-                let newIndex = currentImageIndex - 1;
-                while (newIndex >= 0 && images[newIndex].type === 'video') {
-                    newIndex--;
-                }
-                if (newIndex >= 0) {
-                    currentImageIndex = newIndex;
-                    modalImg.src = images[currentImageIndex].url;
-                    updateNavigationButtons();
-                }
+        function showPreviousItem() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateModalContent();
             }
         }
 
-        function showNextImage() {
-            if (currentImageIndex < images.length - 1) {
-                let newIndex = currentImageIndex + 1;
-                while (newIndex < images.length && images[newIndex].type === 'video') {
-                    newIndex++;
-                }
-                if (newIndex < images.length) {
-                    currentImageIndex = newIndex;
-                    modalImg.src = images[currentImageIndex].url;
-                    updateNavigationButtons();
-                }
+        function showNextItem() {
+            if (currentIndex < mediaItems.length - 1) {
+                currentIndex++;
+                updateModalContent();
             }
         }
 
         closeModal.onclick = function() {
             modal.style.display = 'none';
+            modalVideo.pause();
         }
 
-        prevBtn.onclick = showPreviousImage;
-        nextBtn.onclick = showNextImage;
+        prevBtn.onclick = showPreviousItem;
+        nextBtn.onclick = showNextItem;
 
         // Keyboard navigation
         window.addEventListener('keydown', function(event) {
             if (modal.style.display === 'flex') {
                 if (event.key === 'ArrowLeft') {
-                    showPreviousImage();
+                    showPreviousItem();
                 } else if (event.key === 'ArrowRight') {
-                    showNextImage();
+                    showNextItem();
                 } else if (event.key === 'Escape') {
                     modal.style.display = 'none';
+                    modalVideo.pause();
                 }
             }
         });
@@ -183,6 +177,7 @@
         window.onclick = function(event) {
             if (event.target === modal) {
                 modal.style.display = 'none';
+                modalVideo.pause();
             }
         }
 
