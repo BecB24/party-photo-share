@@ -6,6 +6,8 @@
     <title>Upload - Rebecca's 30th Birthday Photos & Videos</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Great+Vibes&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -24,18 +26,32 @@
                 <form id="uploadForm" class="upload-form">
                     <div class="file-input-container">
                         <input type="file" id="mediaInput" name="media" accept="image/*,video/*" required>
-                        <label for="mediaInput" class="custom-file-input">Choose photos & videos</label>
+                        <label for="mediaInput" class="custom-file-input">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            Choose photos & videos
+                        </label>
                     </div>
                     <div class="upload-info">
-                        <p>Supported formats:</p>
-                        <ul>
-                            <li>Images: JPG, PNG, GIF</li>
-                            <li>Videos: MP4, MOV, AVI</li>
-                            <li>Max file size: 500MB</li>
-                        </ul>
+                        <div class="info-card">
+                            <div class="info-item">
+                                <i class="fas fa-image"></i>
+                                <span>Images: JPG, PNG, GIF</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-video"></i>
+                                <span>Videos: MP4, MOV, AVI</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-file-arrow-up"></i>
+                                <span>Max file size: 500MB</span>
+                            </div>
+                        </div>
                     </div>
                     <div id="preview" class="image-preview-grid"></div>
-                    <button type="submit" class="btn">Upload Files</button>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-upload"></i>
+                        Upload Files
+                    </button>
                 </form>
                 <div id="uploadStatus" class="upload-status"></div>
                 <div id="uploadProgress" class="upload-progress-container">
