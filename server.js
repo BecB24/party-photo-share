@@ -3,37 +3,13 @@ const multer = require('multer');
 const path = require('path');
 const QRCode = require('qrcode');
 const cloudinary = require('cloudinary').v2;
-const mongoose = require('mongoose');
 require('dotenv').config();
 
-// MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://becb24:Bec240894@cluster0.mongodb.net/party-photos?retryWrites=true&w=majority';
-
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log('Connected to MongoDB');
-}).catch(err => {
-    console.error('MongoDB connection error:', err);
-});
-
-// Define Image Schema
-const imageSchema = new mongoose.Schema({
-    url: { type: String, required: true },
-    filename: { type: String, required: true },
-    uploadDate: { type: Date, default: Date.now },
-    publicId: String,
-    resourceType: { type: String, enum: ['image', 'video'] }
-});
-
-const Image = mongoose.model('Image', imageSchema);
-
-// Configure Cloudinary with environment variables
+// Configure Cloudinary
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dtrnwnuju',
-    api_key: process.env.CLOUDINARY_API_KEY || '983297892259464',
-    api_secret: process.env.CLOUDINARY_API_SECRET
+    cloud_name: 'dtrnwnuju',
+    api_key: '983297892259464',
+    api_secret: process.env.CLOUDINARY_API_SECRET || 'OsMT1S1CXEayXAUFK9y6pI07HX8'
 });
 
 const app = express();
@@ -98,16 +74,6 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
         });
         console.log('Cloudinary upload successful:', result.secure_url);
 
-        // Save metadata to MongoDB
-        const imageDoc = new Image({
-            url: result.secure_url,
-            filename: req.file.originalname,
-            publicId: result.public_id,
-            resourceType: isVideo ? 'video' : 'image'
-        });
-        await imageDoc.save();
-        console.log('Metadata saved to MongoDB');
-
         res.json({
             success: true,
             message: 'File uploaded successfully',
@@ -138,17 +104,42 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
 // Get media endpoint
 app.get('/api/images', async (req, res) => {
     try {
-        console.log('Fetching media from MongoDB...');
+        console.log('Fetching media from Cloudinary...');
         
-        const allMedia = await Image.find({})
-            .sort({ uploadDate: -1 })
-            .limit(100)
-            .lean();
+        // Search for both images and videos
+        const [imageResults, videoResults] = await Promise.all([
+            cloudinary.search
+                .expression('folder:party-photos AND resource_type:image')
+                .sort_by('created_at', 'desc')
+                .max_results(100)
+                .execute(),
+            cloudinary.search
+                .expression('folder:party-photos AND resource_type:video')
+                .sort_by('created_at', 'desc')
+                .max_results(100)
+                .execute()
+        ]);
+
+        // Combine and sort results
+        const allMedia = [
+            ...imageResults.resources.map(resource => ({
+                url: resource.secure_url,
+                publicId: resource.public_id,
+                timestamp: resource.created_at,
+                type: 'image'
+            })),
+            ...videoResults.resources.map(resource => ({
+                url: resource.secure_url,
+                publicId: resource.public_id,
+                timestamp: resource.created_at,
+                type: 'video'
+            }))
+        ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
         console.log(`Found ${allMedia.length} media items`);
         res.json(allMedia);
     } catch (error) {
-        console.error('Error fetching media:', error);
+        console.error('Error fetching media from Cloudinary:', error);
         res.status(500).json({
             success: false,
             message: 'Error fetching media',
@@ -171,51 +162,6 @@ app.get('/api/qr-code', async (req, res) => {
             message: 'Error generating QR code'
         });
     }
-});
-
-// Test endpoint for MongoDB connection
-app.get('/api/test-db', async (req, res) => {
-  try {
-    // Get current connection state
-    const state = mongoose.connection.readyState;
-    const stateMap = {
-      0: 'disconnected',
-      1: 'connected',
-      2: 'connecting',
-      3: 'disconnecting'
-    };
-
-    // Try to write a test document
-    const testDoc = new Image({
-      url: 'test-url',
-      filename: 'test-file',
-      uploadDate: new Date()
-    });
-    await testDoc.save();
-
-    // Try to read it back
-    const readDoc = await Image.findById(testDoc._id);
-
-    // Clean up by deleting the test document
-    await Image.findByIdAndDelete(testDoc._id);
-
-    res.json({
-      success: true,
-      connectionState: stateMap[state],
-      databaseName: mongoose.connection.name,
-      writeTest: 'success',
-      readTest: readDoc ? 'success' : 'failed',
-      message: 'MongoDB connection test successful'
-    });
-  } catch (error) {
-    console.error('MongoDB test failed:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      connectionState: stateMap[mongoose.connection.readyState],
-      message: 'MongoDB connection test failed'
-    });
-  }
 });
 
 // Catch-all route for SPA
