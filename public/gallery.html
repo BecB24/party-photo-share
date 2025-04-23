@@ -23,6 +23,17 @@
         <main>
             <section class="gallery-section">
                 <h2>Party Photo & Video Gallery</h2>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">
+                        <i class="fas fa-images"></i> All Media
+                    </button>
+                    <button class="filter-btn" data-filter="image">
+                        <i class="fas fa-camera"></i> Photos
+                    </button>
+                    <button class="filter-btn" data-filter="video">
+                        <i class="fas fa-video"></i> Videos
+                    </button>
+                </div>
                 <div id="gallery" class="gallery-grid"></div>
             </section>
         </main>
@@ -52,9 +63,60 @@
         const closeModal = document.querySelector('.close-modal');
         const prevBtn = document.querySelector('.prev-btn');
         const nextBtn = document.querySelector('.next-btn');
+        const filterButtons = document.querySelectorAll('.filter-btn');
         
         let currentIndex = 0;
         let mediaItems = [];
+        let filteredMediaItems = [];
+        let currentFilter = 'all';
+
+        // Filter functionality
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Apply filter
+                currentFilter = button.getAttribute('data-filter');
+                filterMedia();
+            });
+        });
+
+        function filterMedia() {
+            if (!mediaItems.length) return;
+
+            filteredMediaItems = currentFilter === 'all' 
+                ? mediaItems 
+                : mediaItems.filter(item => item.type === currentFilter);
+
+            renderGallery();
+        }
+
+        function renderGallery() {
+            if (filteredMediaItems.length === 0) {
+                gallery.innerHTML = `<p class="no-media">No ${currentFilter === 'all' ? 'content' : currentFilter + 's'} available.</p>`;
+                return;
+            }
+
+            gallery.innerHTML = filteredMediaItems.map((item, index) => {
+                const isVideo = item.type === 'video';
+                return `
+                    <div class="gallery-item ${isVideo ? 'video-item' : ''}" onclick="openModal('${item.url}', ${index})">
+                        ${isVideo ? `
+                            <video src="${item.url}" preload="metadata">
+                                Your browser does not support the video tag.
+                            </video>
+                        ` : `
+                            <img src="${item.url}" alt="Party photo" loading="lazy">
+                        `}
+                        <div class="media-overlay">
+                            <span class="media-type">${isVideo ? 'Video' : 'Photo'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
 
         // Load media
         async function loadImages() {
@@ -75,26 +137,10 @@
                     return;
                 }
                 
-                gallery.innerHTML = media.map((item, index) => {
-                    const isVideo = item.type === 'video';
-                    return `
-                        <div class="gallery-item ${isVideo ? 'video-item' : ''}" onclick="openModal('${item.url}', ${index})">
-                            ${isVideo ? `
-                                <video src="${item.url}" preload="metadata">
-                                    Your browser does not support the video tag.
-                                </video>
-                            ` : `
-                                <img src="${item.url}" alt="Party photo" loading="lazy">
-                            `}
-                            <div class="media-overlay">
-                                <span class="media-type">${isVideo ? 'Video' : 'Photo'}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                // Store media items for modal navigation
+                // Store media items and apply current filter
                 mediaItems = media;
+                filterMedia();
+
             } catch (error) {
                 console.error('Error loading media:', error);
                 gallery.innerHTML = `
@@ -115,7 +161,7 @@
         }
 
         function updateModalContent() {
-            const item = mediaItems[currentIndex];
+            const item = filteredMediaItems[currentIndex];
             const isVideo = item.type === 'video';
             
             // Reset both elements
@@ -135,7 +181,7 @@
 
         function updateNavigationButtons() {
             prevBtn.style.display = currentIndex > 0 ? 'block' : 'none';
-            nextBtn.style.display = currentIndex < mediaItems.length - 1 ? 'block' : 'none';
+            nextBtn.style.display = currentIndex < filteredMediaItems.length - 1 ? 'block' : 'none';
         }
 
         function showPreviousItem() {
@@ -146,7 +192,7 @@
         }
 
         function showNextItem() {
-            if (currentIndex < mediaItems.length - 1) {
+            if (currentIndex < filteredMediaItems.length - 1) {
                 currentIndex++;
                 updateModalContent();
             }
