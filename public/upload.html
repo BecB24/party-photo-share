@@ -87,7 +87,7 @@
                 return;
             }
 
-            status.textContent = 'Preparing upload...';
+            status.textContent = 'Uploading...';
             status.className = 'upload-status';
             progressContainer.style.display = 'block';
             progressBar.style.width = '0%';
@@ -102,35 +102,32 @@
                     formData.append('image', files[i]);
 
                     try {
-                        console.log(`Uploading file ${i + 1}/${totalFiles}: ${files[i].name}`);
                         const response = await fetch('/api/upload', {
                             method: 'POST',
                             body: formData
                         });
                         
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
                         const result = await response.json();
                         
                         if (result.success) {
                             successCount++;
-                            console.log(`Successfully uploaded ${files[i].name}`);
                             uploadCount.textContent = `${successCount}/${totalFiles}`;
                             progressBar.style.width = `${(successCount / totalFiles) * 100}%`;
                         } else {
-                            console.error(`Failed to upload ${files[i].name}:`, result);
-                            status.textContent = `Error uploading ${files[i].name}: ${result.message}`;
-                            status.className = 'upload-status error';
+                            throw new Error(result.message || 'Upload failed');
                         }
                     } catch (error) {
                         console.error(`Error uploading ${files[i].name}:`, error);
-                        status.textContent = `Error uploading ${files[i].name}: ${error.message}`;
-                        status.className = 'upload-status error';
                     }
                 }
 
                 if (successCount === totalFiles) {
                     status.textContent = 'All photos uploaded successfully!';
                     status.className = 'upload-status success';
-                    // Clear the form and preview after a successful upload
                     setTimeout(() => {
                         form.reset();
                         preview.innerHTML = '';
@@ -146,7 +143,7 @@
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                status.textContent = error.message || 'Error uploading photos. Please try again.';
+                status.textContent = 'Error uploading photos. Please try again.';
                 status.className = 'upload-status error';
                 progressContainer.style.display = 'none';
             }

@@ -43,10 +43,7 @@ app.get('/api/health', (req, res) => {
 
 // Upload endpoint
 app.post('/api/upload', upload.single('image'), async (req, res) => {
-    console.log('Upload request received');
-    
     if (!req.file) {
-        console.log('No file in request');
         return res.status(400).json({
             success: false,
             message: 'No file uploaded'
@@ -54,31 +51,13 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
     }
 
     try {
-        console.log('Processing file:', {
-            originalname: req.file.originalname,
-            mimetype: req.file.mimetype,
-            size: req.file.size
-        });
-
         // Create data URI from buffer
         const b64 = Buffer.from(req.file.buffer).toString('base64');
         const dataURI = `data:${req.file.mimetype};base64,${b64}`;
 
-        console.log('Uploading to Cloudinary...');
         // Upload to Cloudinary
         const result = await cloudinary.uploader.upload(dataURI, {
-            resource_type: 'auto',
-            folder: 'party-photos',
-            allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
-            transformation: [
-                { quality: 'auto:good' },
-                { fetch_format: 'auto' }
-            ]
-        });
-
-        console.log('Cloudinary upload successful:', {
-            url: result.secure_url,
-            public_id: result.public_id
+            folder: 'party-photos'
         });
 
         res.json({
@@ -90,19 +69,10 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Upload error:', {
-            message: error.message,
-            code: error.http_code || error.code,
-            stack: error.stack
-        });
-
+        console.error('Upload error:', error);
         res.status(500).json({
             success: false,
-            message: `Upload failed: ${error.message}`,
-            error: {
-                code: error.http_code || error.code,
-                message: error.message
-            }
+            message: 'Error uploading file'
         });
     }
 });
