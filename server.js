@@ -19,6 +19,9 @@ const pool = mysql.createPool({
     user: process.env.DATABASE_USERNAME,
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
     ssl: {
         rejectUnauthorized: true
     }
@@ -43,13 +46,22 @@ const testConnection = async () => {
         connection.release();
         return true;
     } catch (error) {
-        console.error('Database connection error:', error);
+        console.error('Database connection error:', {
+            message: error.message,
+            code: error.code,
+            errno: error.errno,
+            sqlState: error.sqlState
+        });
         return false;
     }
 };
 
 // Initialize database
-testConnection();
+testConnection().then(connected => {
+    if (!connected) {
+        console.error('Failed to connect to database. Please check your environment variables.');
+    }
+});
 
 const app = express();
 
@@ -187,18 +199,21 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 // Get images endpoint
 app.get('/api/images', async (req, res) => {
     try {
+        console.log('Fetching images from database...');
         const connection = await pool.getConnection();
         const [rows] = await connection.query(
             'SELECT * FROM images ORDER BY timestamp DESC'
         );
         connection.release();
         
+        console.log('Found images:', rows);
         res.json(rows);
     } catch (error) {
         console.error('Error fetching images:', error);
         res.status(500).json({
             success: false,
-            message: 'Error fetching images'
+            message: 'Error fetching images',
+            error: error.message
         });
     }
 });
