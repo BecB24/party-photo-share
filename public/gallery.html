@@ -48,35 +48,53 @@
         let currentImageIndex = 0;
         let images = [];
 
-        // Load images
+        // Load media
         async function loadImages() {
             try {
                 const response = await fetch('/api/images');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                const data = await response.json();
+                const media = await response.json();
                 
-                if (!Array.isArray(data)) {
-                    console.error('Unexpected response format:', data);
+                if (!Array.isArray(media)) {
+                    console.error('Unexpected response format:', media);
                     throw new Error('Invalid response format from server');
                 }
 
-                if (data.length === 0) {
-                    gallery.innerHTML = '<p class="no-images">No images uploaded yet. Be the first to share a photo!</p>';
+                if (media.length === 0) {
+                    gallery.innerHTML = '<p class="no-media">No content uploaded yet. Be the first to share!</p>';
                     return;
                 }
                 
-                gallery.innerHTML = data.map((image, index) => `
-                    <div class="gallery-item">
-                        <img src="${image.url}" alt="Party photo" loading="lazy" onclick="openModal('${image.url}', ${index})">
-                    </div>
-                `).join('');
+                gallery.innerHTML = media.map((item, index) => {
+                    if (item.type === 'video') {
+                        return `
+                            <div class="gallery-item video-item">
+                                <video src="${item.url}" controls playsinline>
+                                    Your browser does not support the video tag.
+                                </video>
+                                <div class="media-overlay">
+                                    <span class="media-type">Video</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        return `
+                            <div class="gallery-item">
+                                <img src="${item.url}" alt="Party photo" loading="lazy" onclick="openModal('${item.url}', ${index})">
+                            </div>
+                        `;
+                    }
+                }).join('');
+
+                // Store media items for modal navigation
+                images = media;
             } catch (error) {
-                console.error('Error loading images:', error);
+                console.error('Error loading media:', error);
                 gallery.innerHTML = `
                     <div class="error-container">
-                        <p class="error">Error loading images. Please try again later.</p>
+                        <p class="error">Error loading content. Please try again later.</p>
                         <p class="error-details">${error.message}</p>
                         <button onclick="loadImages()" class="btn">Retry</button>
                     </div>
@@ -86,6 +104,12 @@
 
         // Modal functions
         function openModal(src, index) {
+            const item = images[index];
+            if (item.type === 'video') {
+                // Don't open modal for videos, they play inline
+                return;
+            }
+            
             modal.style.display = 'flex';
             modalImg.src = src;
             currentImageIndex = index;
@@ -93,23 +117,46 @@
         }
 
         function updateNavigationButtons() {
-            prevBtn.style.display = currentImageIndex > 0 ? 'block' : 'none';
-            nextBtn.style.display = currentImageIndex < images.length - 1 ? 'block' : 'none';
+            // Find next/previous image (skipping videos)
+            let prevIndex = currentImageIndex - 1;
+            while (prevIndex >= 0 && images[prevIndex].type === 'video') {
+                prevIndex--;
+            }
+            
+            let nextIndex = currentImageIndex + 1;
+            while (nextIndex < images.length && images[nextIndex].type === 'video') {
+                nextIndex++;
+            }
+            
+            prevBtn.style.display = prevIndex >= 0 ? 'block' : 'none';
+            nextBtn.style.display = nextIndex < images.length ? 'block' : 'none';
         }
 
         function showPreviousImage() {
             if (currentImageIndex > 0) {
-                currentImageIndex--;
-                modalImg.src = images[currentImageIndex].url;
-                updateNavigationButtons();
+                let newIndex = currentImageIndex - 1;
+                while (newIndex >= 0 && images[newIndex].type === 'video') {
+                    newIndex--;
+                }
+                if (newIndex >= 0) {
+                    currentImageIndex = newIndex;
+                    modalImg.src = images[currentImageIndex].url;
+                    updateNavigationButtons();
+                }
             }
         }
 
         function showNextImage() {
             if (currentImageIndex < images.length - 1) {
-                currentImageIndex++;
-                modalImg.src = images[currentImageIndex].url;
-                updateNavigationButtons();
+                let newIndex = currentImageIndex + 1;
+                while (newIndex < images.length && images[newIndex].type === 'video') {
+                    newIndex++;
+                }
+                if (newIndex < images.length) {
+                    currentImageIndex = newIndex;
+                    modalImg.src = images[currentImageIndex].url;
+                    updateNavigationButtons();
+                }
             }
         }
 

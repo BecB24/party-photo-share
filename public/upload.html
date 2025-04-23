@@ -3,31 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload - Rebecca's 30th Birthday Photos</title>
+    <title>Upload - Rebecca's 30th Birthday Photos & Videos</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Great+Vibes&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><span class="fancy-text">Rebecca's</span> <span class="birthday-text">30th</span> <span class="photo-text">Birthday Photos</span> 🎉</h1>
+            <h1><span class="fancy-text">Rebecca's</span> <span class="birthday-text">30th</span> <span class="photo-text">Birthday Photos & Videos</span> 🎉</h1>
             <nav>
                 <a href="/">Home</a>
-                <a href="/upload.html" class="active">Upload Photos</a>
+                <a href="/upload.html" class="active">Upload Photos & Videos</a>
                 <a href="/gallery.html">Gallery</a>
             </nav>
         </header>
 
         <main>
             <section class="upload-section">
-                <h2>Upload Your Photos</h2>
+                <h2>Upload Your Photos & Videos</h2>
                 <form id="uploadForm" class="upload-form">
                     <div class="file-input-container">
-                        <input type="file" id="imageInput" name="images" accept="image/*" multiple required>
-                        <label for="imageInput" class="custom-file-input">Choose photos</label>
+                        <input type="file" id="imageInput" name="media" accept="image/*,video/*" multiple required>
+                        <label for="imageInput" class="custom-file-input">Choose photos & videos</label>
+                    </div>
+                    <div class="upload-info">
+                        <p>Supported formats:</p>
+                        <ul>
+                            <li>Images: JPG, PNG, GIF</li>
+                            <li>Videos: MP4, MOV, AVI</li>
+                            <li>Max file size: 100MB</li>
+                        </ul>
                     </div>
                     <div id="preview" class="image-preview-grid"></div>
-                    <button type="submit" class="btn">Upload Photos</button>
+                    <button type="submit" class="btn">Upload Files</button>
                 </form>
                 <div id="uploadStatus" class="upload-status"></div>
                 <div id="uploadProgress" class="upload-progress-container">
@@ -53,26 +61,40 @@
         const progressBar = document.querySelector('.progress-bar-fill');
         const uploadCount = document.getElementById('uploadCount');
 
-        // Preview images before upload
+        // Preview media before upload
         imageInput.addEventListener('change', function() {
             preview.innerHTML = '';
             const files = Array.from(this.files);
             
             files.forEach(file => {
-                const reader = new FileReader();
                 const previewItem = document.createElement('div');
                 previewItem.className = 'preview-item';
                 
-                reader.onload = function(e) {
-                    previewItem.innerHTML = `
-                        <img src="${e.target.result}" alt="Preview">
-                        <div class="preview-overlay">
-                            <span class="preview-filename">${file.name}</span>
-                        </div>
-                    `;
+                if (file.type.startsWith('video/')) {
+                    // Create video preview
+                    const video = document.createElement('video');
+                    video.src = URL.createObjectURL(file);
+                    video.controls = true;
+                    previewItem.appendChild(video);
+                } else {
+                    // Create image preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = "Preview";
+                        previewItem.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
                 }
+
+                // Add filename overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'preview-overlay';
+                overlay.innerHTML = `<span class="preview-filename">${file.name}</span>`;
+                previewItem.appendChild(overlay);
+                
                 preview.appendChild(previewItem);
-                reader.readAsDataURL(file);
             });
         });
 
@@ -82,7 +104,7 @@
             const files = Array.from(imageInput.files);
             
             if (files.length === 0) {
-                status.textContent = 'Please select at least one photo';
+                status.textContent = 'Please select at least one file';
                 status.className = 'upload-status error';
                 return;
             }
@@ -99,7 +121,7 @@
 
                 for (let i = 0; i < files.length; i++) {
                     const formData = new FormData();
-                    formData.append('image', files[i]);
+                    formData.append('media', files[i]);
 
                     try {
                         const response = await fetch('/api/upload', {
@@ -126,7 +148,7 @@
                 }
 
                 if (successCount === totalFiles) {
-                    status.textContent = 'All photos uploaded successfully!';
+                    status.textContent = 'All files uploaded successfully!';
                     status.className = 'upload-status success';
                     setTimeout(() => {
                         form.reset();
@@ -135,15 +157,15 @@
                         window.location.href = '/gallery.html';
                     }, 1500);
                 } else if (successCount > 0) {
-                    status.textContent = `Uploaded ${successCount} out of ${totalFiles} photos`;
+                    status.textContent = `Uploaded ${successCount} out of ${totalFiles} files`;
                     status.className = 'upload-status warning';
                 } else {
-                    status.textContent = 'Failed to upload photos. Please try again.';
+                    status.textContent = 'Failed to upload files. Please try again.';
                     status.className = 'upload-status error';
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                status.textContent = 'Error uploading photos. Please try again.';
+                status.textContent = 'Error uploading files. Please try again.';
                 status.className = 'upload-status error';
                 progressContainer.style.display = 'none';
             }

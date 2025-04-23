@@ -19,7 +19,7 @@ const port = process.env.PORT || 3002;
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB limit
+        fileSize: 100 * 1024 * 1024 // 100MB limit for videos
     }
 });
 
@@ -42,7 +42,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Upload endpoint
-app.post('/api/upload', upload.single('image'), async (req, res) => {
+app.post('/api/upload', upload.single('media'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({
             success: false,
@@ -55,9 +55,18 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         const b64 = Buffer.from(req.file.buffer).toString('base64');
         const dataURI = `data:${req.file.mimetype};base64,${b64}`;
 
-        // Upload to Cloudinary
+        // Determine resource type based on mimetype
+        const isVideo = req.file.mimetype.startsWith('video/');
+        
+        // Upload to Cloudinary with appropriate settings
         const result = await cloudinary.uploader.upload(dataURI, {
-            folder: 'party-photos'
+            folder: 'party-photos',
+            resource_type: isVideo ? 'video' : 'image',
+            chunk_size: 6000000, // 6MB chunks for better upload handling
+            eager: isVideo ? [
+                { width: 720, height: 480, crop: "pad" }, // SD version
+                { width: 1280, height: 720, crop: "pad" } // HD version
+            ] : undefined
         });
 
         res.json({
@@ -65,43 +74,61 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             message: 'File uploaded successfully',
             data: {
                 url: result.secure_url,
-                publicId: result.public_id
+                publicId: result.public_id,
+                resourceType: result.resource_type
             }
         });
     } catch (error) {
         console.error('Upload error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error uploading file'
+            message: `Error uploading file: ${error.message}`
         });
     }
 });
 
-// Get images endpoint
+// Get media endpoint
 app.get('/api/images', async (req, res) => {
     try {
-        console.log('Fetching images from Cloudinary...');
+        console.log('Fetching media from Cloudinary...');
         
-        const result = await cloudinary.search
-            .expression('folder:party-photos')
-            .sort_by('created_at', 'desc')
-            .max_results(100)
-            .execute();
+        // Search for both images and videos
+        const [imageResults, videoResults] = await Promise.all([
+            cloudinary.search
+                .expression('folder:party-photos AND resource_type:image')
+                .sort_by('created_at', 'desc')
+                .max_results(100)
+                .execute(),
+            cloudinary.search
+                .expression('folder:party-photos AND resource_type:video')
+                .sort_by('created_at', 'desc')
+                .max_results(100)
+                .execute()
+        ]);
 
-        console.log(`Found ${result.total_count} images`);
-        
-        const images = result.resources.map(resource => ({
-            url: resource.secure_url,
-            publicId: resource.public_id,
-            timestamp: resource.created_at
-        }));
+        // Combine and sort results
+        const allMedia = [
+            ...imageResults.resources.map(resource => ({
+                url: resource.secure_url,
+                publicId: resource.public_id,
+                timestamp: resource.created_at,
+                type: 'image'
+            })),
+            ...videoResults.resources.map(resource => ({
+                url: resource.secure_url,
+                publicId: resource.public_id,
+                timestamp: resource.created_at,
+                type: 'video'
+            }))
+        ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-        res.json(images);
+        console.log(`Found ${allMedia.length} media items`);
+        res.json(allMedia);
     } catch (error) {
-        console.error('Error fetching images from Cloudinary:', error);
+        console.error('Error fetching media from Cloudinary:', error);
         res.status(500).json({
             success: false,
-            message: 'Error fetching images',
+            message: 'Error fetching media',
             error: error.message
         });
     }
