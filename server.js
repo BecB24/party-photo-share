@@ -12,6 +12,28 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET || 'OsMT1S1CXEayXAUFK9y6pI07HX8'
 });
 
+// Create upload preset if it doesn't exist
+async function setupCloudinary() {
+    try {
+        await cloudinary.api.create_upload_preset({
+            name: 'party_photos_preset',
+            folder: 'party-photos',
+            allowed_formats: 'jpg,png,gif,webp,mp4,mov,avi',
+            unsigned: true
+        });
+        console.log('Cloudinary upload preset created successfully');
+    } catch (error) {
+        if (error.error && error.error.message.includes('already exists')) {
+            console.log('Upload preset already exists');
+        } else {
+            console.error('Error creating upload preset:', error);
+        }
+    }
+}
+
+// Call setup function
+setupCloudinary().catch(console.error);
+
 const app = express();
 const port = process.env.PORT || 3002;
 
