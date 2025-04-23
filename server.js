@@ -15,16 +15,17 @@ cloudinary.config({
 const app = express();
 const port = process.env.PORT || 3002;
 
-// Configure multer for memory storage
+// Configure multer for memory storage with increased limits
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 100 * 1024 * 1024 // 100MB limit for videos
+        fileSize: 500 * 1024 * 1024 // 500MB limit
     }
 });
 
-// Enable JSON body parsing
-app.use(express.json());
+// Increase payload size limits for express
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ extended: true, limit: '500mb' }));
 
 // Serve static files
 app.use(express.static('public'));
@@ -56,22 +57,36 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
     try {
         console.log(`Processing file: ${req.file.originalname}, size: ${req.file.size} bytes, type: ${req.file.mimetype}`);
         
+        // Determine resource type based on mimetype
+        const isVideo = req.file.mimetype.startsWith('video/');
+        console.log(`Resource type: ${isVideo ? 'video' : 'image'}`);
+
+        // Configure upload options based on file type
+        const uploadOptions = {
+            folder: 'party-photos',
+            resource_type: isVideo ? 'video' : 'image',
+            chunk_size: 20000000, // 20MB chunks
+            timeout: 120000 // 2 minute timeout
+        };
+
+        if (isVideo) {
+            // Additional video-specific options
+            uploadOptions.eager = [
+                { format: 'mp4', transformation: [
+                    {quality: 'auto:good'},
+                    {fetch_format: 'auto'}
+                ]}
+            ];
+        }
+
         // Create data URI from buffer
         const b64 = Buffer.from(req.file.buffer).toString('base64');
         const dataURI = `data:${req.file.mimetype};base64,${b64}`;
         console.log('Data URI created successfully');
-
-        // Determine resource type based on mimetype
-        const isVideo = req.file.mimetype.startsWith('video/');
-        console.log(`Resource type: ${isVideo ? 'video' : 'image'}`);
         
-        // Upload to Cloudinary with appropriate settings
-        console.log('Initiating Cloudinary upload...');
-        const result = await cloudinary.uploader.upload(dataURI, {
-            folder: 'party-photos',
-            resource_type: isVideo ? 'video' : 'image',
-            chunk_size: 6000000
-        });
+        // Upload to Cloudinary
+        console.log('Initiating Cloudinary upload with options:', uploadOptions);
+        const result = await cloudinary.uploader.upload(dataURI, uploadOptions);
         console.log('Cloudinary upload successful:', result.secure_url);
 
         res.json({
