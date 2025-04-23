@@ -148,7 +148,10 @@ app.get('/api/health', async (req, res) => {
 
 // Upload endpoint
 app.post('/api/upload', upload.single('image'), async (req, res) => {
+    console.log('Upload request received');
+    
     if (!req.file) {
+        console.log('No file in request');
         return res.status(400).json({
             success: false,
             message: 'No file uploaded'
@@ -156,10 +159,17 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
     }
 
     try {
+        console.log('Processing file:', {
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size
+        });
+
         // Create data URI from buffer
         const b64 = Buffer.from(req.file.buffer).toString('base64');
         const dataURI = `data:${req.file.mimetype};base64,${b64}`;
 
+        console.log('Uploading to Cloudinary...');
         // Upload to Cloudinary
         const result = await cloudinary.uploader.upload(dataURI, {
             resource_type: 'auto',
@@ -171,13 +181,24 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             ]
         });
 
+        console.log('Cloudinary upload successful:', {
+            url: result.secure_url,
+            public_id: result.public_id
+        });
+
         // Save to database
-        const connection = await pool.getConnection();
-        await connection.query(
-            'INSERT INTO images (url, publicId) VALUES (?, ?)',
-            [result.secure_url, result.public_id]
-        );
-        connection.release();
+        try {
+            const connection = await pool.getConnection();
+            await connection.query(
+                'INSERT INTO images (url, publicId) VALUES (?, ?)',
+                [result.secure_url, result.public_id]
+            );
+            connection.release();
+            console.log('Image saved to database');
+        } catch (dbError) {
+            console.error('Database error:', dbError);
+            // Don't fail the upload if database save fails
+        }
 
         res.json({
             success: true,
@@ -188,10 +209,19 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Upload error:', error);
+        console.error('Upload error:', {
+            message: error.message,
+            code: error.http_code || error.code,
+            stack: error.stack
+        });
+
         res.status(500).json({
             success: false,
-            message: `Upload failed: ${error.message}`
+            message: `Upload failed: ${error.message}`,
+            error: {
+                code: error.http_code || error.code,
+                message: error.message
+            }
         });
     }
 });

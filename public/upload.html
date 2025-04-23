@@ -102,6 +102,7 @@
                     formData.append('image', files[i]);
 
                     try {
+                        console.log(`Uploading file ${i + 1}/${totalFiles}: ${files[i].name}`);
                         const response = await fetch('/api/upload', {
                             method: 'POST',
                             body: formData
@@ -111,35 +112,37 @@
                         
                         if (result.success) {
                             successCount++;
+                            console.log(`Successfully uploaded ${files[i].name}`);
                             uploadCount.textContent = `${successCount}/${totalFiles}`;
                             progressBar.style.width = `${(successCount / totalFiles) * 100}%`;
                         } else {
-                            console.error(`Failed to upload ${files[i].name}: ${result.message}`);
+                            console.error(`Failed to upload ${files[i].name}:`, result);
+                            status.textContent = `Error uploading ${files[i].name}: ${result.message}`;
+                            status.className = 'upload-status error';
                         }
                     } catch (error) {
                         console.error(`Error uploading ${files[i].name}:`, error);
+                        status.textContent = `Error uploading ${files[i].name}: ${error.message}`;
+                        status.className = 'upload-status error';
                     }
                 }
 
                 if (successCount === totalFiles) {
                     status.textContent = 'All photos uploaded successfully!';
                     status.className = 'upload-status success';
-                } else if (successCount > 0) {
-                    status.textContent = `Uploaded ${successCount} out of ${totalFiles} photos`;
-                    status.className = 'upload-status warning';
-                } else {
-                    status.textContent = 'Failed to upload photos. Please try again.';
-                    status.className = 'upload-status error';
-                }
-
-                // Clear the form and preview after a successful upload
-                if (successCount > 0) {
+                    // Clear the form and preview after a successful upload
                     setTimeout(() => {
                         form.reset();
                         preview.innerHTML = '';
                         progressContainer.style.display = 'none';
                         window.location.href = '/gallery.html';
                     }, 1500);
+                } else if (successCount > 0) {
+                    status.textContent = `Uploaded ${successCount} out of ${totalFiles} photos`;
+                    status.className = 'upload-status warning';
+                } else {
+                    status.textContent = 'Failed to upload photos. Please try again.';
+                    status.className = 'upload-status error';
                 }
             } catch (error) {
                 console.error('Upload error:', error);
