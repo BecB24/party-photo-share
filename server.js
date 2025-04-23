@@ -5,11 +5,11 @@ const QRCode = require('qrcode');
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 
-// Configure Cloudinary
+// Configure Cloudinary with environment variables
 cloudinary.config({
-    cloud_name: 'dtrnwnuju',
-    api_key: '983297892259464',
-    api_secret: 'OsMT1S1CXEayXAUFK9y6pI07HX8'
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dtrnwnuju',
+    api_key: process.env.CLOUDINARY_API_KEY || '983297892259464',
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 const app = express();
@@ -43,7 +43,10 @@ app.get('/api/health', (req, res) => {
 
 // Upload endpoint
 app.post('/api/upload', upload.single('media'), async (req, res) => {
+    console.log('Upload request received');
+    
     if (!req.file) {
+        console.error('No file received in request');
         return res.status(400).json({
             success: false,
             message: 'No file uploaded'
@@ -51,23 +54,25 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
     }
 
     try {
+        console.log(`Processing file: ${req.file.originalname}, size: ${req.file.size} bytes, type: ${req.file.mimetype}`);
+        
         // Create data URI from buffer
         const b64 = Buffer.from(req.file.buffer).toString('base64');
         const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+        console.log('Data URI created successfully');
 
         // Determine resource type based on mimetype
         const isVideo = req.file.mimetype.startsWith('video/');
+        console.log(`Resource type: ${isVideo ? 'video' : 'image'}`);
         
         // Upload to Cloudinary with appropriate settings
+        console.log('Initiating Cloudinary upload...');
         const result = await cloudinary.uploader.upload(dataURI, {
             folder: 'party-photos',
             resource_type: isVideo ? 'video' : 'image',
-            chunk_size: 6000000, // 6MB chunks for better upload handling
-            eager: isVideo ? [
-                { width: 720, height: 480, crop: "pad" }, // SD version
-                { width: 1280, height: 720, crop: "pad" } // HD version
-            ] : undefined
+            chunk_size: 6000000
         });
+        console.log('Cloudinary upload successful:', result.secure_url);
 
         res.json({
             success: true,
@@ -79,10 +84,19 @@ app.post('/api/upload', upload.single('media'), async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Upload error:', error);
+        console.error('Upload error details:', {
+            message: error.message,
+            stack: error.stack,
+            file: req.file ? {
+                name: req.file.originalname,
+                size: req.file.size,
+                type: req.file.mimetype
+            } : 'No file data'
+        });
+        
         res.status(500).json({
             success: false,
-            message: `Error uploading file: ${error.message}`
+            message: `Upload failed: ${error.message}`
         });
     }
 });

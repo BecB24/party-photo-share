@@ -124,18 +124,20 @@
                     formData.append('media', files[i]);
 
                     try {
+                        console.log(`Uploading file ${i + 1}/${totalFiles}: ${files[i].name}`);
                         const response = await fetch('/api/upload', {
                             method: 'POST',
                             body: formData
                         });
                         
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        
                         const result = await response.json();
                         
+                        if (!response.ok) {
+                            throw new Error(result.message || `HTTP error! status: ${response.status}`);
+                        }
+                        
                         if (result.success) {
+                            console.log(`Successfully uploaded ${files[i].name}`);
                             successCount++;
                             uploadCount.textContent = `${successCount}/${totalFiles}`;
                             progressBar.style.width = `${(successCount / totalFiles) * 100}%`;
@@ -144,6 +146,8 @@
                         }
                     } catch (error) {
                         console.error(`Error uploading ${files[i].name}:`, error);
+                        status.textContent = `Error uploading ${files[i].name}: ${error.message}`;
+                        status.className = 'upload-status error';
                     }
                 }
 
@@ -165,7 +169,7 @@
                 }
             } catch (error) {
                 console.error('Upload error:', error);
-                status.textContent = 'Error uploading files. Please try again.';
+                status.textContent = `Error uploading files: ${error.message}`;
                 status.className = 'upload-status error';
                 progressContainer.style.display = 'none';
             }
