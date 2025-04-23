@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const QRCode = require('qrcode');
 const cloudinary = require('cloudinary').v2;
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Configure Cloudinary with environment variables
@@ -162,6 +163,51 @@ app.get('/api/qr-code', async (req, res) => {
             message: 'Error generating QR code'
         });
     }
+});
+
+// Test endpoint for MongoDB connection
+app.get('/api/test-db', async (req, res) => {
+  try {
+    // Get current connection state
+    const state = mongoose.connection.readyState;
+    const stateMap = {
+      0: 'disconnected',
+      1: 'connected',
+      2: 'connecting',
+      3: 'disconnecting'
+    };
+
+    // Try to write a test document
+    const testDoc = new Image({
+      url: 'test-url',
+      filename: 'test-file',
+      uploadDate: new Date()
+    });
+    await testDoc.save();
+
+    // Try to read it back
+    const readDoc = await Image.findById(testDoc._id);
+
+    // Clean up by deleting the test document
+    await Image.findByIdAndDelete(testDoc._id);
+
+    res.json({
+      success: true,
+      connectionState: stateMap[state],
+      databaseName: mongoose.connection.name,
+      writeTest: 'success',
+      readTest: readDoc ? 'success' : 'failed',
+      message: 'MongoDB connection test successful'
+    });
+  } catch (error) {
+    console.error('MongoDB test failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      connectionState: stateMap[mongoose.connection.readyState],
+      message: 'MongoDB connection test failed'
+    });
+  }
 });
 
 // Catch-all route for SPA
