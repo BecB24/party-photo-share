@@ -1035,7 +1035,6 @@ input[type="file"] {
         padding: 1rem !important;
         border: 2px solid var(--primary-color) !important;
         border-radius: 10px !important;
-        box-shadow: none !important;
     }
 
     .qr-container img {
@@ -1049,6 +1048,7 @@ input[type="file"] {
         backdrop-filter: none !important;
         animation: none !important;
         transition: none !important;
+        box-shadow: none !important;
     }
 
     /* Hide footer */
