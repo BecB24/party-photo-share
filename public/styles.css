@@ -101,17 +101,8 @@ nav a.active {
 
 /* Hero Section */
 .hero {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 2rem;
     text-align: center;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 600px;
+    padding: 2rem;
 }
 
 .hero p {
@@ -859,11 +850,10 @@ input[type="file"] {
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 2rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    margin: 2rem auto;
+    max-width: 600px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    display: flex;
-    flex-direction: column;
-    min-height: 600px;
 }
 
 .playlist-section h2 {
@@ -877,10 +867,7 @@ input[type="file"] {
 .spotify-player {
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .spotify-player iframe {
@@ -890,39 +877,12 @@ input[type="file"] {
 }
 
 @media (max-width: 768px) {
-    .content-grid {
-        padding: 1rem;
-        gap: 1.5rem;
-    }
-    
-    .hero, .playlist-section {
+    .playlist-section {
         padding: 1.5rem;
+        margin: 1.5rem;
     }
     
     .playlist-section h2 {
         font-size: 1.5rem;
-    }
-}
-
-/* Content Grid Layout */
-.content-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-@media (min-width: 1024px) {
-    .content-grid {
-        grid-template-columns: 1fr 1fr;
-        align-items: start;
-        gap: 3rem;
-    }
-    
-    .hero, .playlist-section {
-        margin: 0;
-        height: 100%;
     }
 } 
