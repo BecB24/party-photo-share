@@ -931,50 +931,48 @@ input[type="file"] {
 /* Print Styles */
 @media print {
     @page {
+        size: A4;
         margin: 0;
     }
 
     body {
         background: none !important;
         color: black !important;
-        margin: 2cm !important;
+        margin: 1.5cm !important;
         position: relative;
+        min-height: 0 !important;
+        height: auto !important;
     }
 
     /* Add decorative background */
     body::before {
-        content: "🎉";
+        content: "";
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        opacity: 0.03;
+        opacity: 0.05;
         z-index: -1;
-        font-size: 60px;
-        transform: rotate(-15deg);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: repeating-linear-gradient(
-            45deg,
-            #f0f0f0 0px,
-            #f0f0f0 20px,
-            #ffffff 20px,
-            #ffffff 40px
-        );
+        background: 
+            linear-gradient(45deg, transparent 48%, #C0A960 49%, #C0A960 51%, transparent 52%) center/2cm 2cm,
+            linear-gradient(-45deg, transparent 48%, #C0A960 49%, #C0A960 51%, transparent 52%) center/2cm 2cm;
     }
 
     .container {
         position: relative;
         z-index: 1;
+        max-height: 100vh;
+        overflow: visible;
+        page-break-inside: avoid;
+        page-break-after: avoid;
     }
 
     /* Keep header styling but optimize for print */
     h1 {
         color: black !important;
         text-shadow: none !important;
-        margin-bottom: 1cm;
+        margin-bottom: 0.8cm;
         font-size: 32pt !important;
         page-break-after: avoid;
         position: relative;
@@ -987,6 +985,7 @@ input[type="file"] {
         color: black !important;
         text-shadow: none !important;
         display: block;
+        margin-bottom: 0.3cm;
     }
 
     .birthday-text {
@@ -1016,7 +1015,7 @@ input[type="file"] {
         box-shadow: none !important;
         border: none !important;
         padding: 0 !important;
-        margin: 2cm auto !important;
+        margin: 1cm auto !important;
         max-width: 100% !important;
         text-align: center;
         page-break-inside: avoid;
@@ -1031,19 +1030,24 @@ input[type="file"] {
     .hero p {
         color: black !important;
         font-size: 12pt !important;
-        margin-bottom: 1cm;
+        margin-bottom: 0.8cm;
     }
 
     /* Ensure QR code prints clearly */
     .qr-container {
-        margin: 1cm auto !important;
-        max-width: 300px !important;
+        margin: 0.8cm auto !important;
+        max-width: 280px !important;
         background: white !important;
+        padding: 1rem !important;
+        border: 2px solid #C0A960 !important;
+        border-radius: 10px !important;
+        box-shadow: none !important;
     }
 
     .qr-container img {
         width: 100% !important;
         height: auto !important;
+        display: block !important;
     }
 
     /* Remove any backdrop filters and animations */
@@ -1056,12 +1060,6 @@ input[type="file"] {
     /* Hide footer */
     footer {
         display: none !important;
-    }
-
-    /* Hide URL and page numbers */
-    @page {
-        size: auto;
-        margin: 0mm;
     }
 
     /* Hide URL display */
