@@ -936,15 +936,14 @@ input[type="file"] {
     }
 
     body {
-        background: none !important;
-        color: black !important;
+        background: url('/images/rebeccaberry30thpictures.png') center/cover no-repeat !important;
         margin: 1.5cm !important;
         position: relative;
         min-height: 0 !important;
         height: auto !important;
     }
 
-    /* Add decorative background */
+    /* Add decorative overlay */
     body::before {
         content: "";
         position: fixed;
@@ -952,11 +951,8 @@ input[type="file"] {
         left: 0;
         width: 100%;
         height: 100%;
-        opacity: 0.05;
-        z-index: -1;
-        background: 
-            linear-gradient(45deg, transparent 48%, #C0A960 49%, #C0A960 51%, transparent 52%) center/2cm 2cm,
-            linear-gradient(-45deg, transparent 48%, #C0A960 49%, #C0A960 51%, transparent 52%) center/2cm 2cm;
+        background: rgba(255, 255, 255, 0.95) !important;
+        z-index: 0;
     }
 
     .container {
@@ -968,10 +964,8 @@ input[type="file"] {
         page-break-after: avoid;
     }
 
-    /* Keep header styling but optimize for print */
+    /* Keep header styling with colors */
     h1 {
-        color: black !important;
-        text-shadow: none !important;
         margin-bottom: 0.8cm;
         font-size: 32pt !important;
         page-break-after: avoid;
@@ -982,7 +976,7 @@ input[type="file"] {
     .fancy-text {
         font-family: 'Great Vibes', cursive !important;
         font-size: 42pt !important;
-        color: black !important;
+        color: var(--primary-color) !important;
         text-shadow: none !important;
         display: block;
         margin-bottom: 0.3cm;
@@ -990,16 +984,16 @@ input[type="file"] {
 
     .birthday-text {
         font-size: 36pt !important;
-        color: black !important;
-        background: none !important;
-        -webkit-text-fill-color: black !important;
+        background: linear-gradient(45deg, var(--primary-color), #FFD700) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
         text-shadow: none !important;
         display: inline;
     }
 
     .photo-text {
         font-size: 32pt !important;
-        color: black !important;
+        color: var(--secondary-color) !important;
         text-shadow: none !important;
         display: inline;
     }
@@ -1022,13 +1016,13 @@ input[type="file"] {
     }
 
     .hero h2 {
-        color: black !important;
+        color: var(--secondary-color) !important;
         font-size: 18pt !important;
         margin-bottom: 0.5cm;
     }
 
     .hero p {
-        color: black !important;
+        color: var(--secondary-color) !important;
         font-size: 12pt !important;
         margin-bottom: 0.8cm;
     }
@@ -1039,7 +1033,7 @@ input[type="file"] {
         max-width: 280px !important;
         background: white !important;
         padding: 1rem !important;
-        border: 2px solid #C0A960 !important;
+        border: 2px solid var(--primary-color) !important;
         border-radius: 10px !important;
         box-shadow: none !important;
     }
