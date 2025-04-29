@@ -1033,10 +1033,10 @@ input[type="file"] {
     /* Ensure QR code prints clearly */
     .qr-container {
         margin: 0.8cm auto !important;
-        max-width: 280px !important;
+        max-width: 350px !important;
         background: white !important;
-        padding: 1rem !important;
-        border: 2px solid var(--primary-color) !important;
+        padding: 1.2rem !important;
+        border: 2px solid #C0A960 !important;
         border-radius: 10px !important;
     }
 
