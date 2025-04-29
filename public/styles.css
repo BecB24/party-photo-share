@@ -926,4 +926,89 @@ input[type="file"] {
     .buttons {
         margin-top: 1.5rem;
     }
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background: none !important;
+        color: black !important;
+    }
+
+    .container {
+        max-width: 100%;
+        margin: 0;
+        padding: 1cm;
+    }
+
+    /* Keep header styling but optimize for print */
+    h1 {
+        color: black !important;
+        text-shadow: none !important;
+        margin-bottom: 1cm;
+        font-size: 24pt !important;
+    }
+
+    .fancy-text, .birthday-text, .photo-text {
+        color: black !important;
+        text-shadow: none !important;
+    }
+
+    /* Hide navigation and playlist */
+    nav, .playlist-section, .buttons {
+        display: none !important;
+    }
+
+    /* Optimize hero section for print */
+    .hero {
+        background: none !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+        max-width: 100% !important;
+        text-align: center;
+    }
+
+    .hero h2 {
+        color: black !important;
+        font-size: 18pt !important;
+        margin-bottom: 0.5cm;
+    }
+
+    .hero p {
+        color: black !important;
+        font-size: 12pt !important;
+        margin-bottom: 1cm;
+    }
+
+    /* Ensure QR code prints clearly */
+    .qr-container {
+        margin: 1cm auto !important;
+        max-width: 300px !important;
+    }
+
+    .qr-container img {
+        width: 100% !important;
+        height: auto !important;
+    }
+
+    /* Add page break control */
+    .hero {
+        page-break-inside: avoid;
+    }
+
+    /* Remove any backdrop filters and animations */
+    * {
+        backdrop-filter: none !important;
+        animation: none !important;
+        transition: none !important;
+    }
+
+    /* Footer adjustments */
+    footer {
+        margin-top: 1cm;
+        color: black !important;
+        text-align: center;
+    }
 } 
