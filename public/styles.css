@@ -975,7 +975,7 @@ input[type="file"] {
     .fancy-text {
         font-family: 'Great Vibes', cursive !important;
         font-size: 42pt !important;
-        color: var(--primary-color) !important;
+        color: #C0A960 !important;
         text-shadow: none !important;
         display: block;
         margin-bottom: 0.3cm;
@@ -983,16 +983,17 @@ input[type="file"] {
 
     .birthday-text {
         font-size: 36pt !important;
-        background: linear-gradient(45deg, var(--primary-color), #FFD700) !important;
-        -webkit-background-clip: text !important;
-        -webkit-text-fill-color: transparent !important;
+        color: #C0A960 !important;
+        background: none !important;
+        -webkit-text-fill-color: #C0A960 !important;
         text-shadow: none !important;
         display: inline;
+        font-weight: 600 !important;
     }
 
     .photo-text {
         font-size: 32pt !important;
-        color: var(--secondary-color) !important;
+        color: #000000 !important;
         text-shadow: none !important;
         display: inline;
     }
