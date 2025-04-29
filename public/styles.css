@@ -930,15 +930,21 @@ input[type="file"] {
 
 /* Print Styles */
 @media print {
+    /* Remove default headers and footers */
+    @page {
+        margin: 0;
+    }
+
     body {
         background: none !important;
         color: black !important;
+        margin: 2cm !important;
     }
 
-    .container {
-        max-width: 100%;
-        margin: 0;
-        padding: 1cm;
+    /* Hide URL, date/time, and page info */
+    .container::before,
+    .container::after {
+        content: none !important;
     }
 
     /* Keep header styling but optimize for print */
@@ -946,12 +952,32 @@ input[type="file"] {
         color: black !important;
         text-shadow: none !important;
         margin-bottom: 1cm;
-        font-size: 24pt !important;
+        font-size: 32pt !important;
+        page-break-after: avoid;
     }
 
-    .fancy-text, .birthday-text, .photo-text {
+    .fancy-text {
+        font-family: 'Great Vibes', cursive !important;
+        font-size: 42pt !important;
         color: black !important;
         text-shadow: none !important;
+        display: block;
+    }
+
+    .birthday-text {
+        font-size: 36pt !important;
+        color: black !important;
+        background: none !important;
+        -webkit-text-fill-color: black !important;
+        text-shadow: none !important;
+        display: inline;
+    }
+
+    .photo-text {
+        font-size: 32pt !important;
+        color: black !important;
+        text-shadow: none !important;
+        display: inline;
     }
 
     /* Hide navigation and playlist */
@@ -965,9 +991,10 @@ input[type="file"] {
         box-shadow: none !important;
         border: none !important;
         padding: 0 !important;
-        margin: 0 auto !important;
+        margin: 2cm auto !important;
         max-width: 100% !important;
         text-align: center;
+        page-break-inside: avoid;
     }
 
     .hero h2 {
@@ -986,16 +1013,12 @@ input[type="file"] {
     .qr-container {
         margin: 1cm auto !important;
         max-width: 300px !important;
+        background: white !important;
     }
 
     .qr-container img {
         width: 100% !important;
         height: auto !important;
-    }
-
-    /* Add page break control */
-    .hero {
-        page-break-inside: avoid;
     }
 
     /* Remove any backdrop filters and animations */
@@ -1005,10 +1028,19 @@ input[type="file"] {
         transition: none !important;
     }
 
-    /* Footer adjustments */
+    /* Hide footer */
     footer {
-        margin-top: 1cm;
-        color: black !important;
-        text-align: center;
+        display: none !important;
+    }
+
+    /* Hide URL and page numbers */
+    @page {
+        size: auto;
+        margin: 0mm;
+    }
+
+    /* Hide URL display */
+    a[href]::after {
+        content: none !important;
     }
 } 
